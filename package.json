@@ -1,0 +1,40 @@
+{
+  "name": "peertutorback",
+  "version": "1.0.0",
+  "description": "Back fuctionality of Peer Tutor",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "tsx --watch ./src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jonyyy0031/PeerTutorBack.git"
+  },
+  "keywords": [
+    "functionality",
+    "back",
+    "server",
+    "university",
+    "project"
+  ],
+  "author": "Jonathan Hernandez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jonyyy0031/PeerTutorBack/issues"
+  },
+  "homepage": "https://github.com/Jonyyy0031/PeerTutorBack#readme",
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "mysql2": "^3.11.4"
+  }
+}
