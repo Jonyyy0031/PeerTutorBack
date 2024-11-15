@@ -7,4 +7,13 @@ export default interface Tutor {
     phone: string;
     department: string;
     status: Status;
+    created_at: Date;
+}
+
+export default interface CreateTutorDTO {
+    name: string;
+    email: string;
+    phone: string;
+    department: string;
+    status: Status;
 }

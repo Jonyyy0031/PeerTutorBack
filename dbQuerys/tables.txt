@@ -1,0 +1,29 @@
+-- Tabla 'Tutor'
+CREATE TABLE Tutor (
+    id_tutor INT PRIMARY KEY AUTO_INCREMENT,
+    name NVARCHAR(100) NOT NULL,
+    email NVARCHAR(150) NOT NULL UNIQUE,
+    phone NVARCHAR(15) NOT NULL,
+    department NVARCHAR(100) NOT NULL,
+    status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT NULL,
+    created_at DATETIME NOT NULL
+);
+
+-- Tabla 'Subject'
+CREATE TABLE Subject (
+    id_subject INT PRIMARY key AUTO_INCREMENT,
+    name NVARCHAR(100) NOT NULL,
+    department NVARCHAR(100) NOT NULL,
+    created_at DATETIME NOT NULL
+);
+
+
+-- Tabla 'Log'
+CREATE TABLE Log (
+    id_log INT PRIMARY KEY AUTO_INCREMENT,
+    NameStudent NVARCHAR(100) NOT NULL,
+    grupo NVARCHAR(50) NOT NULL,
+    id_tutor INT NOT NULL,
+    status NVARCHAR(10) CHECK (status IN ('accepted', 'pending', 'rejected')) NOT NULL,
+    created_at DATETIME not null
+)
