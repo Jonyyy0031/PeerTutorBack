@@ -1,16 +1,16 @@
 import { Request, Response } from 'express';
-import { TutorsService } from '../services/tutors-service';
+import { TutorService } from '../services/tutors-service';
 import CreateTutorDTO from '../../shared/models/tutor.types';
-import { parse } from 'path';
+
 
 export class TutorController {
 
-    constructor(private tutorsService: TutorsService = new TutorsService()) {
+    constructor(private tutorService: TutorService = new TutorService()) {
     }
 
     getTutors = async (req: Request, res: Response): Promise<void> => {
         try {
-            const tutors = await this.tutorsService.getAllTutors();
+            const tutors = await this.tutorService.getAllTutors();
             res.json(tutors);
         } catch (error) {
             res.status(500).json({
@@ -24,7 +24,7 @@ export class TutorController {
     getTutorById = async (req: Request, res: Response): Promise<void> => {
         try {
             const id = parseInt(req.params.id);
-            const tutor = await this.tutorsService.getTutorById(id);
+            const tutor = await this.tutorService.getTutorById(id);
 
             if (!tutor) {
                 res.status(404).json({
@@ -40,21 +40,52 @@ export class TutorController {
                 message: 'Error getting tutor',
                 error: (error)
             });
-            console.log(error);
+        }
+    }
+
+    assingSubjectsToTutor = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const tutorId = parseInt(req.params.id);
+            const subjectIds = req.body;
+            await this.tutorService.assignSubjectsToTutor(tutorId, subjectIds);
+
+            const updatedTutor = await this.tutorService.getTutorById(tutorId)
+
+            res.json(updatedTutor);
+
+        } catch (error) {
+            res.status(500).json({
+                message: 'Error assing subjects to tutor',
+                error: (error)
+            });
+        }
+    }
+
+    removeSubjects = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const tutorId = parseInt(req.params.id);
+            const { subjectIds } = req.body;
+
+            await this.tutorService.removeSubjectsFromTutor(tutorId, subjectIds);
+            const updatedTutor = await this.tutorService.getTutorById(tutorId);
+
+            res.json(updatedTutor);
+        } catch (error) {
+            res.status(500).json({ message: 'Error removing subjects', error });
         }
     }
 
     createTutor = async (req: Request, res: Response): Promise<void> => {
         try {
-            const tutorData: CreateTutorDTO = req.body;
-            const newTutor = await this.tutorsService.createTutor(tutorData);
+            const tutorData: CreateTutorDTO = req.body.tutorData;
+            const subjectIds = req.body.subjectIds;
+            const newTutor = await this.tutorService.createTutor(tutorData, subjectIds);
             res.status(201).json(newTutor);
         } catch (error) {
             res.status(500).json({
                 message: 'Error creating tutor',
                 error: (error)
             });
-            console.log(error);
         }
     }
 
@@ -62,7 +93,7 @@ export class TutorController {
         try {
             const id = parseInt(req.params.id);
             const tutorData: Partial<CreateTutorDTO> = req.body;
-            const updatedTutor = await this.tutorsService.updateTutor(id, tutorData);
+            const updatedTutor = await this.tutorService.updateTutor(id, tutorData);
 
             if (!updatedTutor) {
                 res.status(404).json({
@@ -77,14 +108,13 @@ export class TutorController {
                 message: 'Error updating tutor',
                 error: (error)
             });
-            console.log(error);
         }
     }
 
     deleteTutor = async (req: Request, res: Response): Promise<void> => {
         try {
             const id = parseInt(req.params.id);
-            const deleted = await this.tutorsService.deleteTutor(id);
+            const deleted = await this.tutorService.deleteTutor(id);
 
             if (!deleted) {
                 res.status(404).json({
@@ -93,7 +123,7 @@ export class TutorController {
                 return;
             }
 
-            res.status(204).json({
+            res.json({
                 message: 'Tutor deleted'
             });
         } catch (error) {

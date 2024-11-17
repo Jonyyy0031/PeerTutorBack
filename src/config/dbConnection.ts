@@ -22,8 +22,6 @@ export class Database {
         } catch (error) {
             console.log("Error executing query: ", error);
             throw error;
-        } finally {
-            pool.end();
-        }
+        } 
     }
 }

@@ -1,3 +1,5 @@
+import Subject from "./subjects.types";
+
 type Status = 'active' | 'inactive';
 
 export default interface Tutor {
@@ -7,7 +9,7 @@ export default interface Tutor {
     phone: string;
     department: string;
     status: Status;
-    created_at: Date;
+    subjects: Subject[];
 }
 
 export default interface CreateTutorDTO {

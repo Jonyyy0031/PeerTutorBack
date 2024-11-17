@@ -1,6 +1,6 @@
 -- Tabla 'Tutor'
-CREATE TABLE Tutor (
-    id_tutor INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE Tutors (
+    id INT PRIMARY KEY AUTO_INCREMENT,
     name NVARCHAR(100) NOT NULL,
     email NVARCHAR(150) NOT NULL UNIQUE,
     phone NVARCHAR(15) NOT NULL,
@@ -10,8 +10,8 @@ CREATE TABLE Tutor (
 );
 
 -- Tabla 'Subject'
-CREATE TABLE Subject (
-    id_subject INT PRIMARY key AUTO_INCREMENT,
+CREATE TABLE Subjects (
+    id INT PRIMARY key AUTO_INCREMENT,
     name NVARCHAR(100) NOT NULL,
     department NVARCHAR(100) NOT NULL,
     created_at DATETIME NOT NULL
@@ -19,11 +19,19 @@ CREATE TABLE Subject (
 
 
 -- Tabla 'Log'
-CREATE TABLE Log (
-    id_log INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE Logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
     NameStudent NVARCHAR(100) NOT NULL,
     grupo NVARCHAR(50) NOT NULL,
     id_tutor INT NOT NULL,
     status NVARCHAR(10) CHECK (status IN ('accepted', 'pending', 'rejected')) NOT NULL,
     created_at DATETIME not null
 )
+
+CREATE TABLE subject_tutor (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    tutor_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    FOREIGN KEY (tutor_id) REFERENCES tutors(id_tutor),
+    FOREIGN KEY (subject_id) REFERENCES subjects(id_subject)
+);
