@@ -1,7 +1,6 @@
 type Status = 'accepted' | 'pending' | 'rejected';
 
 export default interface Log {
-    id_log: number;
     NameStudent: string;
     Group: string;
     id_tutor: number;

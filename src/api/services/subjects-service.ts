@@ -1,4 +1,5 @@
 import { Database } from "../../config/dbConnection";
+import { isValidStatus, validateDepartment, validateName, validateSubjectName } from "../../shared/helpers/validators";
 import Subject from "../../shared/models/subjects.types";
 import CreateSubjectDTO from '../../shared/models/subjects.types';
 
@@ -19,15 +20,35 @@ export class SubjectService {
     }
 
     async createSubject(subjectData: CreateSubjectDTO): Promise<Subject> {
-        console.log("Creating subject");
-        const query = `INSERT INTO subjects (name, department) VALUES (?, ?)`;
+        return Database.transaction(async (connection) => {
+        if (!validateName(subjectData.name)) throw new Error('Nombre de materia inválido');
+        if (!validateDepartment(subjectData.department)) throw new Error('Departamento inválido');
+        if (!isValidStatus(subjectData.status)) throw new Error('Estado inválido');
+
+        const isNameUnique = await validateSubjectName(subjectData.name);
+        if (!isNameUnique) throw new Error('Nombre ya registrado');
+
+        const query = `INSERT INTO subjects (name, department, status) VALUES (?, ?, ?)`;
         const subjectCreated = await Database.query<any>(query,
-            [subjectData.name, subjectData.department]);
+            [subjectData.name, subjectData.department, subjectData.status]);
         return this.getSubjectById(subjectCreated.insertId);
+        });
     }
 
     async updateSubject(id: number, subjectData: Partial<CreateSubjectDTO>): Promise<Subject> {
         console.log("Updating subject");
+
+        if (subjectData.name !== undefined && !validateName(subjectData.name)) throw new Error('Nombre de materia inválido');
+
+        if (subjectData.department !== undefined && !validateDepartment(subjectData.department)) throw new Error('Departamento inválido');
+
+        if (subjectData.status !== undefined && !isValidStatus(subjectData.status)) throw new Error('Estado inválido');
+
+        if (subjectData.name !== undefined) {
+            const isNameUnique = await validateSubjectName(subjectData.name, id);
+            if (!isNameUnique) throw new Error('Nombre ya registrado');
+        }
+
         const setClause = Object.keys(subjectData)
             .map(key => `${key} = ?`)
             .join(', ');

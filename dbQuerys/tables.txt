@@ -6,7 +6,6 @@ CREATE TABLE Tutors (
     phone NVARCHAR(15) NOT NULL,
     department NVARCHAR(100) NOT NULL,
     status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT NULL,
-    created_at DATETIME NOT NULL
 );
 
 -- Tabla 'Subject'

@@ -17,7 +17,6 @@ export class TutorController {
                 message: 'Error getting tutors',
                 error: (error)
             });
-            console.log(error);
         }
     }
 
@@ -25,16 +24,13 @@ export class TutorController {
         try {
             const id = parseInt(req.params.id);
             const tutor = await this.tutorService.getTutorById(id);
-
             if (!tutor) {
                 res.status(404).json({
                     message: 'Tutor not found'
                 });
                 return;
             }
-
             res.json(tutor);
-
         } catch (error) {
             res.status(500).json({
                 message: 'Error getting tutor',
@@ -43,42 +39,16 @@ export class TutorController {
         }
     }
 
-    assingSubjectsToTutor = async (req: Request, res: Response): Promise<void> => {
-        try {
-            const tutorId = parseInt(req.params.id);
-            const subjectIds = req.body;
-            await this.tutorService.assignSubjectsToTutor(tutorId, subjectIds);
-
-            const updatedTutor = await this.tutorService.getTutorById(tutorId)
-
-            res.json(updatedTutor);
-
-        } catch (error) {
-            res.status(500).json({
-                message: 'Error assing subjects to tutor',
-                error: (error)
-            });
-        }
-    }
-
-    removeSubjects = async (req: Request, res: Response): Promise<void> => {
-        try {
-            const tutorId = parseInt(req.params.id);
-            const { subjectIds } = req.body;
-
-            await this.tutorService.removeSubjectsFromTutor(tutorId, subjectIds);
-            const updatedTutor = await this.tutorService.getTutorById(tutorId);
-
-            res.json(updatedTutor);
-        } catch (error) {
-            res.status(500).json({ message: 'Error removing subjects', error });
-        }
-    }
 
     createTutor = async (req: Request, res: Response): Promise<void> => {
         try {
-            const tutorData: CreateTutorDTO = req.body.tutorData;
-            const subjectIds = req.body.subjectIds;
+            const { tutorData, subjectIds } = req.body;
+            if (!subjectIds || subjectIds.length === 0) {
+                res.status(400).json({
+                    message: 'At least one subject is required'
+                });
+                return;
+            }
             const newTutor = await this.tutorService.createTutor(tutorData, subjectIds);
             res.status(201).json(newTutor);
         } catch (error) {
@@ -92,8 +62,8 @@ export class TutorController {
     updateTutor = async (req: Request, res: Response): Promise<void> => {
         try {
             const id = parseInt(req.params.id);
-            const tutorData: Partial<CreateTutorDTO> = req.body;
-            const updatedTutor = await this.tutorService.updateTutor(id, tutorData);
+            const { tutorData, subjectIds } = req.body;
+            const updatedTutor = await this.tutorService.updateTutor(id, tutorData, subjectIds);
 
             if (!updatedTutor) {
                 res.status(404).json({
@@ -133,6 +103,20 @@ export class TutorController {
             });
             console.log(error);
         }
+
     }
 
+    removeSubjects = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const tutorId = parseInt(req.params.id);
+            const { subjectIds } = req.body;
+
+            await this.tutorService.removeSubjectsFromTutor(tutorId, subjectIds);
+            const updatedTutor = await this.tutorService.getTutorById(tutorId);
+
+            res.json(updatedTutor);
+        } catch (error) {
+            res.status(500).json({ message: 'Error removing subjects', error });
+        }
+    }
 }

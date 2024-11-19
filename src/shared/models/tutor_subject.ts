@@ -1,4 +1,4 @@
 export default interface Tutor_Subject {
-    id_tutor: number;
-    id_subject: number;
+    tutor_id: number;
+    subject_id: number;
 }
