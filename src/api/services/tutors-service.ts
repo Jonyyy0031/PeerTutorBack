@@ -9,22 +9,22 @@ import { isValidStatus, validateDepartment, validateEmail, validateEmailTutor, v
 export class TutorService {
     async getAllTutors(): Promise<Tutor[]> {
         console.log("Getting tutors");
-        const query = `SELECT * FROM tutors`;
+        const query = `SELECT * FROM tutor`;
         const tutors = await Database.query<Tutor[]>(query);
         for (const tutor of tutors) {
-            tutor.subjects = await this.getTutorSubjects(tutor.id_tutor);
+            tutor.subjectIds = await this.getTutorSubjects(tutor.id);
         }
         return tutors;
     }
 
     async getTutorById(id: number): Promise<Tutor> {
         console.log("Getting tutor by id");
-        const query = `SELECT * FROM tutors WHERE id_tutor = ?`;
+        const query = `SELECT * FROM tutor WHERE id = ?`;
         const result = await Database.query<Tutor[]>(query, [id]);
         const tutor = result[0];
 
         if (tutor) {
-            tutor.subjects = await this.getTutorSubjects(id);
+            tutor.subjectIds = await this.getTutorSubjects(id);
         }
 
         return tutor;
@@ -32,11 +32,10 @@ export class TutorService {
 
     async getTutorSubjects(tutorId: number): Promise<Subject[]> {
         console.log("Getting tutor subjects");
-        console.log(tutorId);
         const query = `
             SELECT s.*
-            FROM subjects s
-            INNER JOIN tutor_subjects ts ON s.id_subject = ts.subject_id
+            FROM subject s
+            INNER JOIN tutor_subjects ts ON s.id = ts.subject_id
             WHERE ts.tutor_id = ?
         `;
         const tutorSubjects = await Database.query<Subject[]>(query, [tutorId]);
@@ -60,10 +59,11 @@ export class TutorService {
                 if (!SubjectsExist) throw new Error('Existen materias no registradas');
             }
 
-            const query = 'INSERT INTO tutors (name, email, phone, department, status) VALUES(?, ?, ?, ?, ?)'
+            const query = 'INSERT INTO tutor (name, email, phone, department, status) VALUES(?, ?, ?, ?, ?)'
             const [tutorCreated] = await connection.execute(query,
                 [tutorData.name, tutorData.email, tutorData.phone, tutorData.department, tutorData.status]
             );
+            console.log(tutorCreated);
             const tutorId = Database.getInsertId(tutorCreated);
 
             await this.assignSubjectsToTutor(tutorId, subjectIds, 'add');
@@ -77,7 +77,7 @@ export class TutorService {
 
         switch (mode) {
             case 'replace':
-                await Database.query('DELETE FROM tutor_subjects WHERE tutor_id = ?', [tutorId]);
+                await this.removeSubjectsFromTutor(tutorId, subjectIds);
                 break;
 
             case 'add':
@@ -110,34 +110,34 @@ export class TutorService {
                 const isEmailUnique = await validateEmailTutor(tutorData.email, id);
                 if (!isEmailUnique) throw new Error('Email ya registrado');
             }
-
             const setClause = Object.keys(tutorData)
             .map(key => `${key} = ?`)
-            .join(', ');
-            await Database.query(
-                `UPDATE tutors SET ${setClause} WHERE id_Tutor = ? `,
+            .join(',');
+            await connection.execute(
+                `UPDATE tutor SET ${setClause} WHERE id = ? `,
                 [...Object.values(tutorData), id]
             );
 
-            if (subjectIds !== undefined) {
+            if (subjectIds !== undefined && subjectIds.length > 0) {
                 const isSubjectsValid = await subjectsExist(connection, subjectIds);
                 if (!isSubjectsValid) throw new Error('Algunas materias no están registradas');
                 await this.assignSubjectsToTutor(id, subjectIds, 'replace');
             }
+
             return this.getTutorById(id);
         })
     }
 
     async deleteTutor(id: number): Promise<boolean> {
         console.log("Deleting tutor");
-        const result = await Database.query<any>(`DELETE FROM tutors WHERE Id_Tutor = ? `, [id]);
+        const result = await Database.query<any>(`DELETE FROM tutor WHERE id = ? `, [id]);
         return result.affectedRows > 0;
     }
 
     async removeSubjectsFromTutor(tutorId: number, subjectIds: number[]): Promise<void> {
-        await Database.query(
-            'DELETE FROM tutor_subjects WHERE tutor_id = ? AND subject_id IN (?)',
-            [tutorId, subjectIds]
-        );
+        console.log(tutorId)
+        console.log(subjectIds)
+        const query = `DELETE FROM tutor_subjects WHERE tutor_id = ? AND subject_id IN (${subjectIds.join(',')})`;
+        await Database.query(query, [tutorId, ...subjectIds]);
     }
 }

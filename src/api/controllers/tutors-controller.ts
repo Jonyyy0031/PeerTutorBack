@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { TutorService } from '../services/tutors-service';
-import CreateTutorDTO from '../../shared/models/tutor.types';
 
 
 export class TutorController {
@@ -43,6 +42,7 @@ export class TutorController {
     createTutor = async (req: Request, res: Response): Promise<void> => {
         try {
             const { tutorData, subjectIds } = req.body;
+            console.log(req.body)
             if (!subjectIds || subjectIds.length === 0) {
                 res.status(400).json({
                     message: 'At least one subject is required'

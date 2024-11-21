@@ -35,9 +35,7 @@ export class Database {
 
         try {
             const result = await callback(connection);
-            console.log(result)
             await connection.commit();
-            console.log('Transaction committed');
             return result;
         } catch (error) {
             await connection.rollback();

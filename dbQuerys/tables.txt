@@ -1,36 +1,34 @@
 -- Tabla 'Tutor'
-CREATE TABLE Tutors (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE tutor (
+    id_tutor INT PRIMARY KEY AUTO_INCREMENT,
     name NVARCHAR(100) NOT NULL,
     email NVARCHAR(150) NOT NULL UNIQUE,
     phone NVARCHAR(15) NOT NULL,
     department NVARCHAR(100) NOT NULL,
-    status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT NULL,
+    status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT NULL
 );
 
 -- Tabla 'Subject'
-CREATE TABLE Subjects (
-    id INT PRIMARY key AUTO_INCREMENT,
+CREATE TABLE subject (
+    id_subject INT PRIMARY key AUTO_INCREMENT,
     name NVARCHAR(100) NOT NULL,
     department NVARCHAR(100) NOT NULL,
-    created_at DATETIME NOT NULL
+    status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT NULL
 );
 
+CREATE TABLE subject_tutors (
+    tutor_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    PRIMARY KEY (tutor_id, subject_id),
+    FOREIGN KEY (tutor_id) REFERENCES tutors(id_tutor) ON DELETE CASCADE, ON UPDATE CASCADE,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id_subject) ON DELETE CASCADE, ON UPDATE CASCADE
+);
 
 -- Tabla 'Log'
-CREATE TABLE Logs (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    NameStudent NVARCHAR(100) NOT NULL,
+CREATE TABLE Log (
+    id_log INT PRIMARY KEY AUTO_INCREMENT,
+    namestudent NVARCHAR(100) NOT NULL,
     grupo NVARCHAR(50) NOT NULL,
-    id_tutor INT NOT NULL,
     status NVARCHAR(10) CHECK (status IN ('accepted', 'pending', 'rejected')) NOT NULL,
     created_at DATETIME not null
 )
-
-CREATE TABLE subject_tutor (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    tutor_id INT NOT NULL,
-    subject_id INT NOT NULL,
-    FOREIGN KEY (tutor_id) REFERENCES tutors(id_tutor),
-    FOREIGN KEY (subject_id) REFERENCES subjects(id_subject)
-);

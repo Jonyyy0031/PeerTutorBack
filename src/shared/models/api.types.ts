@@ -3,3 +3,7 @@ export interface ApiResponse<T> {
     status: number;
     message?: string;
 }
+
+export interface BaseEntity {
+    id: number;
+}

@@ -1,7 +1,8 @@
+import { BaseEntity } from "./api.types";
+
 type Status = 'active' | 'inactive';
 
-export default interface Subject {
-    id_subject: string;
+export default interface Subject extends BaseEntity {
     name: string;
     department: string;
     status: Status
