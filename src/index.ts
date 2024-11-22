@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 
 import tutorRouter from './api/routes/tutors-routes';
 import subjectRouter from './api/routes/subjects-routes';
+import userRouter from './api/routes/users-routes';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 
 app.use("/api", tutorRouter);
 app.use("/api", subjectRouter);
+app.use("/api", userRouter);
 
 
 

@@ -1,5 +1,4 @@
 import { Database } from "../../config/dbConnection";
-import Tutor_Subject from "../../shared/models/tutor_subject";
 import Tutor from "../../shared/models/tutor.types";
 import CreateTutorDTO from '../../shared/models/tutor.types';
 import Subject from "../../shared/models/subjects.types";

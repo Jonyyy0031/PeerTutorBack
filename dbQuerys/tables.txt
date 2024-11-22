@@ -1,6 +1,22 @@
+--Tabla 'Rol'
+CREATE TABLE Rol (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name NVARCHAR(100) NOT NULL
+)
+
+--Tabla 'User'
+CREATE TABLE User (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name NVARCHAR(100) NOT NULL,
+    email NVARCHAR(100) NOT NULL UNIQUE,
+    password NVARCHAR(100) NOT NULL,
+    rol_id INT NOT NULL,
+    FOREIGN KEY (rol_id) REFERENCES Rol(id) ON DELETE CASCADE ON UPDATE CASCADE
+)
+
 -- Tabla 'Tutor'
 CREATE TABLE tutor (
-    id_tutor INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     name NVARCHAR(100) NOT NULL,
     email NVARCHAR(150) NOT NULL UNIQUE,
     phone NVARCHAR(15) NOT NULL,
@@ -10,13 +26,13 @@ CREATE TABLE tutor (
 
 -- Tabla 'Subject'
 CREATE TABLE subject (
-    id_subject INT PRIMARY key AUTO_INCREMENT,
+    id INT PRIMARY key AUTO_INCREMENT,
     name NVARCHAR(100) NOT NULL,
     department NVARCHAR(100) NOT NULL,
     status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT NULL
 );
 
-CREATE TABLE subject_tutors (
+CREATE TABLE tutor_subjects (
     tutor_id INT NOT NULL,
     subject_id INT NOT NULL,
     PRIMARY KEY (tutor_id, subject_id),
@@ -26,9 +42,42 @@ CREATE TABLE subject_tutors (
 
 -- Tabla 'Log'
 CREATE TABLE Log (
-    id_log INT PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     namestudent NVARCHAR(100) NOT NULL,
     grupo NVARCHAR(50) NOT NULL,
     status NVARCHAR(10) CHECK (status IN ('accepted', 'pending', 'rejected')) NOT NULL,
     created_at DATETIME not null
 )
+
+-- Dummy Data
+insert into Rol (name) values
+('Admin')
+
+INSERT INTO User (name, email, password, rol_id) VALUES
+('Juan Pérez', 'juan.perez@empresa.com', 'Password123!', 1),
+('María Gómez', 'maria.gomez@empresa.com', 'AdminPass456@', 1),
+('Carlos Martínez', 'carlos.martinez@empresa.com', 'SecurePassword789#', 1),
+('Ana Rodríguez', 'ana.rodriguez@empresa.com', 'Admin2023!#', 1),
+('Luis Fernández', 'luis.fernandez@empresa.com', 'AdminPass2024@', 1);
+
+INSERT INTO tutor (name, email, phone, department, status) VALUES
+('Carlos Pérez', 'carlos.perez@universidad.com', '555-0101', 'Matemáticas', 'active'),
+('Ana Gómez', 'ana.gomez@universidad.com', '555-0102', 'Física', 'active'),
+('José Martínez', 'jose.martinez@universidad.com', '555-0103', 'Química', 'inactive'),
+('María Rodríguez', 'maria.rodriguez@universidad.com', '555-0104', 'Biología', 'active'),
+('Luis Fernández', 'luis.fernandez@universidad.com', '555-0105', 'Matemáticas', 'inactive')
+
+INSERT INTO subject (name, department, status) VALUES
+('Cálculo I', 'Matemáticas', 'active'),
+('Física General', 'Física', 'active'),
+('Química Orgánica', 'Química', 'inactive'),
+('Biología Celular', 'Biología', 'active'),
+('Álgebra Lineal', 'Matemáticas', 'inactive');
+
+INSERT INTO tutor_subjects (tutor_id, subject_id) VALUES
+(1, 1),  -- Carlos Pérez es tutor de Cálculo I
+(1, 5),  -- Carlos Pérez es tutor de Álgebra Lineal
+(2, 2),  -- Ana Gómez es tutor de Física General
+(3, 3),  -- José Martínez es tutor de Química Orgánica
+(4, 4),  -- María Rodríguez es tutor de Biología Celular
+(5, 1);  -- Luis Fernández es tutor de Cálculo I

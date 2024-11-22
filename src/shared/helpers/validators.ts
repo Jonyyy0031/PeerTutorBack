@@ -27,6 +27,11 @@ export const validateDepartment = (department: string): boolean => {
     return re.test(department);
 }
 
+export const validatePassword = (password: string): boolean => {
+    const re = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    return re.test(password);
+}
+
 export const isValidStatus = (status: string): boolean => {
     return ['active', 'inactive'].includes(status);
 }
@@ -46,8 +51,16 @@ export const validateDBSubjectName = async (name: string, excludeId?: number): P
     return DBFieldValidator('subject', 'name', name, excludeId);
 }
 
+export const validateDBUserName = async (name: string, excludeId?: number): Promise<boolean> => {
+    return DBFieldValidator('user', 'name', name, excludeId);
+}
+
 export const validateEmailTutor = async (email: string, excludeId?: number): Promise<boolean> => {
     return DBFieldValidator('tutor', 'email', email, excludeId);
+}
+
+export const validateDBUserEmail = async (email: string, excludeId?: number): Promise<boolean> => {
+    return DBFieldValidator('user', 'email', email, excludeId);
 }
 
 export const subjectsExist = async (connection: mysql.PoolConnection, subjectIds: number[]): Promise<boolean> => {
