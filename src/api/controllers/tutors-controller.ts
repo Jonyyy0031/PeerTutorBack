@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { TutorService } from '../services/tutors-service';
+import { DatabaseError, ValidationError } from '../../shared/errors/AppErrors';
 
 
 export class TutorController {
@@ -10,11 +11,25 @@ export class TutorController {
     getTutors = async (req: Request, res: Response): Promise<void> => {
         try {
             const tutors = await this.tutorService.getAllTutors();
-            res.json(tutors);
+            res.status(200).json({
+                status: 'success',
+                code: 'OK',
+                message: 'Tutores obtenidos',
+                data: tutors
+            })
         } catch (error) {
+            if (error instanceof DatabaseError) {
+                res.status(500).json({
+                    status: 'error',
+                    code: 'DATABASE_ERROR',
+                    message: error.message
+                });
+                return;
+            }
             res.status(500).json({
-                message: 'Error getting tutors',
-                error: (error)
+                status: 'error',
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Error interno del servidor'
             });
         }
     }
@@ -25,15 +40,31 @@ export class TutorController {
             const tutor = await this.tutorService.getTutorById(id);
             if (!tutor) {
                 res.status(404).json({
-                    message: 'Tutor not found'
+                    status: 'error',
+                    code: 'NOT_FOUND',
+                    message: 'Tutor no encontrado'
                 });
                 return;
             }
-            res.json(tutor);
+            res.status(200).json({
+                status: 'success',
+                code: 'OK',
+                message: 'Tutor obtenido',
+                data: tutor
+            })
         } catch (error) {
+            if (error instanceof DatabaseError) {
+                res.status(500).json({
+                    status: 'error',
+                    code: 'DATABASE_ERROR',
+                    message: error.message
+                });
+                return;
+            }
             res.status(500).json({
-                message: 'Error getting tutor',
-                error: (error)
+                status: 'error',
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Error interno del servidor'
             });
         }
     }
@@ -50,11 +81,33 @@ export class TutorController {
                 return;
             }
             const newTutor = await this.tutorService.createTutor(tutorData, subjectIds);
-            res.status(201).json(newTutor);
-        } catch (error) {
+            res.status(201).json({
+                status: 'success',
+                code: 'CREATED',
+                message: 'Tutor creado',
+                data: newTutor
+            })
+        } catch (error: any) {
+            if (error instanceof ValidationError) {
+                res.status(400).json({
+                    status: 'error',
+                    code: 'VALIDATION_ERROR',
+                    message: error.message
+                });
+                return;
+            }
+            if (error instanceof DatabaseError) {
+                res.status(500).json({
+                    status: 'error',
+                    code: 'DATABASE_ERROR',
+                    message: error.message
+                });
+                return;
+            }
             res.status(500).json({
-                message: 'Error creating tutor',
-                error: (error)
+                status: 'error',
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Error interno del servidor'
             });
         }
     }
@@ -67,16 +120,48 @@ export class TutorController {
 
             if (!updatedTutor) {
                 res.status(404).json({
-                    message: 'Tutor not found'
+                    status: 'error',
+                    code: 'NOT_FOUND',
+                    message: 'Tutor no encontrado'
                 });
                 return;
             }
 
-            res.json(updatedTutor);
+            res.status(200).json({
+                status: 'success',
+                code: 'UPDATED',
+                message: 'Tutor actualizado',
+                data: updatedTutor
+            })
         } catch (error) {
+            if (error instanceof ValidationError) {
+                res.status(400).json({
+                    status: 'error',
+                    code: 'VALIDATION_ERROR',
+                    message: error.message
+                });
+                return;
+            }
+            if (error instanceof DatabaseError) {
+                if (error.message.includes('Ya existe')) {
+                    res.status(409).json({
+                        status: 'error',
+                        code: 'DUPLICATE_ENTRY',
+                        message: error.message
+                    });
+                    return;
+                }
+                res.status(500).json({
+                    status: 'error',
+                    code: 'DATABASE_ERROR',
+                    message: error.message
+                });
+                return;
+            }
             res.status(500).json({
-                message: 'Error updating tutor',
-                error: (error)
+                status: 'error',
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Error interno del servidor'
             });
         }
     }
@@ -88,35 +173,34 @@ export class TutorController {
 
             if (!deleted) {
                 res.status(404).json({
-                    message: 'Tutor not found'
+                    status: 'error',
+                    code: 'NOT_FOUND',
+                    message: 'Tutor no encontrado'
                 });
                 return;
             }
 
             res.json({
-                message: 'Tutor deleted'
+                status: 'success',
+                code: 'DELETED',
+                message: 'Tutor eliminado'
             });
         } catch (error) {
+            if (error instanceof DatabaseError) {
+                res.status(500).json({
+                    status: 'error',
+                    code: 'DATABASE_ERROR',
+                    message: error.message
+                });
+                return;
+            }
             res.status(500).json({
-                message: 'Error deleting tutor',
-                error: (error)
+                status: 'error',
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Error interno del servidor'
             });
             console.log(error);
         }
 
-    }
-
-    removeSubjects = async (req: Request, res: Response): Promise<void> => {
-        try {
-            const tutorId = parseInt(req.params.id);
-            const { subjectIds } = req.body;
-
-            await this.tutorService.removeSubjectsFromTutor(tutorId, subjectIds);
-            const updatedTutor = await this.tutorService.getTutorById(tutorId);
-
-            res.json(updatedTutor);
-        } catch (error) {
-            res.status(500).json({ message: 'Error removing subjects', error });
-        }
     }
 }

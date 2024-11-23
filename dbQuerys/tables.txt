@@ -51,7 +51,7 @@ CREATE TABLE Log (
 
 -- Dummy Data
 insert into Rol (name) values
-('Admin')
+('superAdmin'), (Admin)
 
 INSERT INTO User (name, email, password, rol_id) VALUES
 ('Juan Pérez', 'juan.perez@empresa.com', 'Password123!', 1),

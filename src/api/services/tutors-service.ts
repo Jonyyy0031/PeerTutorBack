@@ -3,6 +3,7 @@ import Tutor from "../../shared/models/tutor.types";
 import CreateTutorDTO from '../../shared/models/tutor.types';
 import Subject from "../../shared/models/subjects.types";
 import { isValidStatus, validateDepartment, validateEmail, validateEmailTutor, validateName, validatePhone, subjectsExist } from '../../shared/helpers/validators';
+import { DatabaseError, ValidationError } from "../../shared/errors/AppErrors";
 
 
 export class TutorService {
@@ -43,31 +44,40 @@ export class TutorService {
 
     async createTutor(tutorData: CreateTutorDTO, subjectIds: number[] = []): Promise<Tutor> {
         return Database.transaction(async (connection) => {
+            try {
+                validateName(tutorData.name);
+                validateDepartment(tutorData.department);
+                validateEmail(tutorData.email);
+                validatePhone(tutorData.phone);
+                isValidStatus(tutorData.status);
 
-            if (!validateName(tutorData.name)) throw new Error('Nombre de tutor inválido');
-            if (!validateDepartment(tutorData.department)) throw new Error('Departamento inválido');
-            if (!validateEmail(tutorData.email)) throw new Error('Email inválido');
-            if (!validatePhone(tutorData.phone)) throw new Error('Teléfono inválido');
-            if (!isValidStatus(tutorData.status)) throw new Error('Estado inválido');
+                const isEmailUnique = await validateEmailTutor(tutorData.email);
+                if (!isEmailUnique) throw new ValidationError('Email ya registrado');
 
-            const isEmailUnique = await validateEmailTutor(tutorData.email);
-            if (!isEmailUnique) throw new Error('Email ya registrado');
+                if (subjectIds.length > 0) {
+                    const SubjectsExist = await subjectsExist(connection, subjectIds);
+                    if (!SubjectsExist) throw new ValidationError('Existen materias no registradas');
+                }
 
-            if (subjectIds.length > 0) {
-                const SubjectsExist = await subjectsExist(connection, subjectIds);
-                if (!SubjectsExist) throw new Error('Existen materias no registradas');
+                const query = 'INSERT INTO tutor (name, email, phone, department, status) VALUES(?, ?, ?, ?, ?)'
+                const [tutorCreated] = await connection.execute(query,
+                    [tutorData.name, tutorData.email, tutorData.phone, tutorData.department, tutorData.status]
+                );
+                console.log(tutorCreated);
+                const tutorId = Database.getInsertId(tutorCreated);
+
+                await this.assignSubjectsToTutor(tutorId, subjectIds, 'add');
+
+                return this.getTutorById(tutorId);
+            } catch (error) {
+                if (error instanceof ValidationError) {
+                    throw error;
+                }
+                if (error instanceof DatabaseError) {
+                    throw error;
+                }
+                throw new DatabaseError('Error inesperado al crear tutor');
             }
-
-            const query = 'INSERT INTO tutor (name, email, phone, department, status) VALUES(?, ?, ?, ?, ?)'
-            const [tutorCreated] = await connection.execute(query,
-                [tutorData.name, tutorData.email, tutorData.phone, tutorData.department, tutorData.status]
-            );
-            console.log(tutorCreated);
-            const tutorId = Database.getInsertId(tutorCreated);
-
-            await this.assignSubjectsToTutor(tutorId, subjectIds, 'add');
-
-            return this.getTutorById(tutorId);
         });
     }
 
@@ -76,6 +86,7 @@ export class TutorService {
 
         switch (mode) {
             case 'replace':
+                console.log('REPLACE')
                 await this.removeSubjectsFromTutor(tutorId, subjectIds);
                 break;
 
@@ -99,31 +110,42 @@ export class TutorService {
 
     async updateTutor(id: number, tutorData: Partial<CreateTutorDTO>, subjectIds?: number[]): Promise<Tutor> {
         return Database.transaction(async (connection) => {
-            if (tutorData.name !== undefined && !validateName(tutorData.name)) throw new Error('Nombre de tutor inválido');
-            if (tutorData.department !== undefined && !validateDepartment(tutorData.department)) throw new Error('Departamento inválido');
-            if (tutorData.status !== undefined && !isValidStatus(tutorData.status)) throw new Error('Estado inválido');
-            if (tutorData.phone !== undefined && !validatePhone(tutorData.phone)) throw new Error('Teléfono inválido');
-            if (tutorData.email !== undefined && !validateEmail(tutorData.email)) throw new Error('Email inválido');
+            try {
 
-            if (tutorData.email !== undefined) {
-                const isEmailUnique = await validateEmailTutor(tutorData.email, id);
-                if (!isEmailUnique) throw new Error('Email ya registrado');
+                if (tutorData.name !== undefined) validateName(tutorData.name);
+                if (tutorData.department !== undefined) validateDepartment(tutorData.department);
+                if (tutorData.status !== undefined) isValidStatus(tutorData.status);
+                if (tutorData.phone !== undefined) validatePhone(tutorData.phone);
+                if (tutorData.email !== undefined) validateEmail(tutorData.email);
+
+                if (tutorData.email !== undefined) {
+                    const isEmailUnique = await validateEmailTutor(tutorData.email, id);
+                    if (!isEmailUnique) throw new ValidationError('Email ya registrado');
+                }
+                const setClause = Object.keys(tutorData)
+                    .map(key => `${key} = ?`)
+                    .join(',');
+                await connection.execute(
+                    `UPDATE tutor SET ${setClause} WHERE id = ? `,
+                    [...Object.values(tutorData), id]
+                );
+
+                if (subjectIds !== undefined && subjectIds.length > 0) {
+                    const isSubjectsValid = await subjectsExist(connection, subjectIds);
+                    if (!isSubjectsValid) throw new ValidationError('Algunas materias no están registradas');
+                    await this.assignSubjectsToTutor(id, subjectIds, 'replace');
+                }
+
+                return this.getTutorById(id);
+            } catch (error) {
+                if (error instanceof ValidationError) {
+                    throw error;
+                }
+                if (error instanceof DatabaseError) {
+                    throw error;
+                }
+                throw new DatabaseError('Error inesperado al actualizar tutor');
             }
-            const setClause = Object.keys(tutorData)
-            .map(key => `${key} = ?`)
-            .join(',');
-            await connection.execute(
-                `UPDATE tutor SET ${setClause} WHERE id = ? `,
-                [...Object.values(tutorData), id]
-            );
-
-            if (subjectIds !== undefined && subjectIds.length > 0) {
-                const isSubjectsValid = await subjectsExist(connection, subjectIds);
-                if (!isSubjectsValid) throw new Error('Algunas materias no están registradas');
-                await this.assignSubjectsToTutor(id, subjectIds, 'replace');
-            }
-
-            return this.getTutorById(id);
         })
     }
 
@@ -134,8 +156,6 @@ export class TutorService {
     }
 
     async removeSubjectsFromTutor(tutorId: number, subjectIds: number[]): Promise<void> {
-        console.log(tutorId)
-        console.log(subjectIds)
         const query = `DELETE FROM tutor_subjects WHERE tutor_id = ? AND subject_id IN (${subjectIds.join(',')})`;
         await Database.query(query, [tutorId, ...subjectIds]);
     }

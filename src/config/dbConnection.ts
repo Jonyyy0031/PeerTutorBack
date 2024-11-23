@@ -1,5 +1,6 @@
 import mysql from 'mysql2/promise';
 import { dbConfig } from './dbConfig';
+import { DatabaseError, ValidationError } from '../shared/errors/AppErrors';
 
 
 export class Database {
@@ -9,7 +10,11 @@ export class Database {
     static async GetConnection() {
         if (!Database.instance) {
             console.log("Creating new connection pool");
-            Database.instance = mysql.createPool(dbConfig);
+            try {
+                Database.instance = mysql.createPool(dbConfig);
+            } catch (error: any) {
+                throw new DatabaseError(`Error al conectar a la base de datos: ${error.message}`);
+            }
         }
         return Database.instance;
     }
@@ -20,9 +25,12 @@ export class Database {
         try {
             const [rows] = await pool.execute(query, params);
             return rows as T;
-        } catch (error) {
+        } catch (error: any) {
             console.log("Error executing query: ", error);
-            throw error;
+            if (error.code === 'ER_DUP_ENTRY') {
+                throw new DatabaseError('Ya existe un registro con esos datos');
+            }
+            throw new DatabaseError(error);
         }
     }
 
@@ -37,9 +45,12 @@ export class Database {
             const result = await callback(connection);
             await connection.commit();
             return result;
-        } catch (error) {
+        } catch (error: any) {
             await connection.rollback();
-            throw error;
+            if (error instanceof DatabaseError || error instanceof ValidationError) {
+                throw error;
+            }
+            throw new DatabaseError(`Error en la transacción: ${error.message}`);
         } finally {
             Database.transactionConnection = null
             connection.release();

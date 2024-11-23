@@ -1,39 +1,53 @@
 import { Database } from "../../config/dbConnection";
+import { ValidationError } from "../errors/AppErrors";
 import mysql from 'mysql2/promise';
 
 export const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
+    if (!re.test(email)) throw new ValidationError('Email inválido');
+    return true;
 };
 
 export const validatePhone = (phone: string): boolean => {
     // /^\d{3}-\d{3}-\d{4}$|^\d{3}\s\d{3}\s\d{4}$/
     const re = /^\d{3}-\d{3}-\d{4}$/;
-    return re.test(phone.replace(/\s/g, ''));
+    if (!re.test(phone.replace(/\s/g, ''))) throw new ValidationError('Teléfono inválido');
+    return true;
 }
 
 export const validateName = (name: string): boolean => {
     const re = /^[a-zA-Z\s]+$/;
-    return re.test(name);
+    if (!re.test(name)) throw new ValidationError('Nombre inválido');
+    return true;
 }
 
 export const validateNameSubject = (name: string): boolean => {
     const re = /^[a-zA-Z0-9\s]+$/;
-    return re.test(name);
+    if (!re.test(name)) throw new ValidationError('Nombre de materia inválido');
+    return true;
+}
+
+export const validateNameUser = (name: string): boolean => {
+    const re = /^[a-zA-Z0-9\s]+$/;
+    if (!re.test(name)) throw new ValidationError('Nombre de usuario inválido');
+    return true;
 }
 
 export const validateDepartment = (department: string): boolean => {
     const re = /^[a-zA-Z0-9\s]+$/;
-    return re.test(department);
+    if (!re.test(department)) throw new ValidationError('Departamento inválido');
+    return true;
 }
 
 export const validatePassword = (password: string): boolean => {
     const re = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-    return re.test(password);
+    if (!re.test(password)) throw new ValidationError('Contraseña inválida');
+    return true;
 }
 
 export const isValidStatus = (status: string): boolean => {
-    return ['active', 'inactive'].includes(status);
+    if (!['active', 'inactive'].includes(status)) throw new ValidationError('Estado inválido');
+    return true;
 }
 
 const DBFieldValidator = async (table: string, field: string, value: any, excludeId?: number): Promise<boolean> => {
@@ -44,6 +58,7 @@ const DBFieldValidator = async (table: string, field: string, value: any, exclud
         params.push(excludeId);
     }
     const result = await Database.query<[{count: number}]>(query, params);
+
     return result[0].count === 0;
 }
 
