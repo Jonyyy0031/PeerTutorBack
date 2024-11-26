@@ -26,16 +26,16 @@ export class SubjectService {
             try {
                 if (Object.keys(subjectData).length === 0) throw new ValidationError('Datos vacios');
 
-                validateNameSubject(subjectData.name);
+                validateNameSubject(subjectData.subject_name);
                 validateDepartment(subjectData.department);
                 isValidStatus(subjectData.status);
 
-                const isNameUnique = await validateDBSubjectName(subjectData.name);
+                const isNameUnique = await validateDBSubjectName(subjectData.subject_name);
                 if (!isNameUnique) throw new ValidationError('La materia ya existe');
 
-                const query = `INSERT INTO subject (name, department, status) VALUES (?, ?, ?)`;
+                const query = `INSERT INTO subject (subject_name, department, status) VALUES (?, ?, ?)`;
                 const [subjectCreated] = await connection.execute(query,
-                    [subjectData.name, subjectData.department, subjectData.status]);
+                    [subjectData.subject_name, subjectData.department, subjectData.status]);
                 let subjectId = Database.getInsertId(subjectCreated);
 
                 return this.getSubjectById(subjectId);
@@ -56,11 +56,11 @@ export class SubjectService {
         return Database.transaction(async (connection) => {
             try {
                 if (Object.keys(subjectData).length === 0) throw new ValidationError('Datos vacios');
-                if (subjectData.name !== undefined) validateNameSubject(subjectData.name);
+                if (subjectData.subject_name !== undefined) validateNameSubject(subjectData.subject_name);
                 if (subjectData.department !== undefined) validateDepartment(subjectData.department);
                 if (subjectData.status !== undefined) isValidStatus(subjectData.status);
-                if (subjectData.name !== undefined) {
-                    const isNameUnique = await validateDBSubjectName(subjectData.name, id);
+                if (subjectData.subject_name !== undefined) {
+                    const isNameUnique = await validateDBSubjectName(subjectData.subject_name, id);
                     if (!isNameUnique) throw new ValidationError('La materia ya existe');
                 }
 

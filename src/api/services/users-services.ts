@@ -7,7 +7,7 @@ export class UserService {
     async getAllUsersWithRol(): Promise<User[]> {
         console.log("Getting users");
         const query =
-            `SELECT u.id, u.name, u.email, r.roleName
+            `SELECT u.id, u.user_name, u.email, r.roleName
         FROM user as u
         INNER JOIN role as r ON u.role_id = r.id`;
         const users = await Database.query<User[]>(query);
@@ -23,7 +23,11 @@ export class UserService {
 
     async getUserById(id: number): Promise<User> {
         console.log("Getting user by id");
-        const query = `SELECT * FROM user WHERE id = ?`;
+        const query = `
+        SELECT u.id, u.user_name, u.email, r.roleName
+        FROM user as u
+        INNER JOIN role as r ON u.role_id = r.id
+        WHERE u.id = ?`;
         const user = await Database.query<User[]>(query, [id]);
         return user[0];
     }
@@ -31,17 +35,18 @@ export class UserService {
     async createUser(userData: CreateUserDTO): Promise<User> {
         return Database.transaction(async (connection) => {
             try {
-                validateNameUser(userData.name);
+                validateNameUser(userData.user_name);
                 validateEmail(userData.email);
-                const isNameUnique = await validateDBUserName(userData.name);
-                if (!isNameUnique) throw new ValidationError('Nombre ya registrado');
+                validatePassword(userData.password);
+                const isNameUnique = await validateDBUserName(userData.user_name);
+                if (!isNameUnique) throw new ValidationError('El nombre de usuario ya existe');
 
                 const isEmailUnique = await validateDBUserEmail(userData.email);
-                if (!isEmailUnique) throw new ValidationError('Email ya registrado');
+                if (!isEmailUnique) throw new ValidationError('El email ya existe');
 
-                const query = `INSERT INTO user (name, email, password, role_id) VALUES (?, ?, ? ,?)`;
+                const query = `INSERT INTO user (user_name, email, password, role_id) VALUES (?, ?, ? ,?)`;
                 const [userCreated] = await connection.execute(query,
-                    [userData.name, userData.email, userData.password, userData.role_id]
+                    [userData.user_name, userData.email, userData.password, userData.role_id]
                 );
                 let userId = Database.getInsertId(userCreated);
 
@@ -62,17 +67,18 @@ export class UserService {
         console.log("Updating user");
         return Database.transaction(async (connection) => {
             try {
-                if (userData.name !== undefined) validateNameUser(userData.name);
+                if (userData.user_name !== undefined) validateNameUser(userData.user_name);
                 if (userData.email !== undefined) validateEmail(userData.email);
                 if (userData.password !== undefined) validatePassword(userData.password);
-                if (userData.name !== undefined) {
-                    const isNameUnique = await validateDBUserName(userData.name, id);
-                    if (!isNameUnique) throw new ValidationError('Nombre ya registrado');
+                if (userData.user_name !== undefined) {
+                    const isNameUnique = await validateDBUserName(userData.user_name, id);
+                    if (!isNameUnique) throw new ValidationError('El nombre de usuario ya existe');
                 }
                 if (userData.email !== undefined) {
                     const isEmailUnique = await validateDBUserName(userData.email, id);
-                    if (!isEmailUnique) throw new ValidationError('Email ya registrado');
+                    if (!isEmailUnique) throw new ValidationError('El email ya existe');
                 }
+                console.log(userData);
                 const setClause = Object.keys(userData)
                     .map(key => `${key} = ?`)
                     .join(', ');

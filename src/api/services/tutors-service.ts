@@ -2,7 +2,7 @@ import { Database } from "../../config/dbConnection";
 import Tutor from "../../shared/models/tutor.types";
 import CreateTutorDTO from '../../shared/models/tutor.types';
 import Subject from "../../shared/models/subjects.types";
-import { isValidStatus, validateDepartment, validateEmail, validateEmailTutor, validateName, validatePhone, subjectsExist } from '../../shared/helpers/validators';
+import { isValidStatus, validateDepartment, validateEmail, validateEmailTutor, validateName, validatePhone, subjectsExist, validateDBTutorName, isValidShift } from '../../shared/helpers/validators';
 import { DatabaseError, ValidationError } from "../../shared/errors/AppErrors";
 
 
@@ -45,11 +45,15 @@ export class TutorService {
     async createTutor(tutorData: CreateTutorDTO, subjectIds: number[] = []): Promise<Tutor> {
         return Database.transaction(async (connection) => {
             try {
-                validateName(tutorData.name);
+                validateName(tutorData.tutor_name);
                 validateDepartment(tutorData.department);
                 validateEmail(tutorData.email);
                 validatePhone(tutorData.phone);
                 isValidStatus(tutorData.status);
+                isValidShift(tutorData.shift);
+
+                const isNameUnique = await validateDBTutorName(tutorData.tutor_name);
+                if (!isNameUnique) throw new ValidationError('Nombre ya registrado');
 
                 const isEmailUnique = await validateEmailTutor(tutorData.email);
                 if (!isEmailUnique) throw new ValidationError('Email ya registrado');
@@ -59,9 +63,9 @@ export class TutorService {
                     if (!SubjectsExist) throw new ValidationError('Existen materias no registradas');
                 }
 
-                const query = 'INSERT INTO tutor (name, email, phone, department, status) VALUES(?, ?, ?, ?, ?)'
+                const query = 'INSERT INTO tutor (tutor_name, email, phone, department, status, shift) VALUES(?, ?, ?, ?, ?, ?)'
                 const [tutorCreated] = await connection.execute(query,
-                    [tutorData.name, tutorData.email, tutorData.phone, tutorData.department, tutorData.status]
+                    [tutorData.tutor_name, tutorData.email, tutorData.phone, tutorData.department, tutorData.status, tutorData.shift]
                 );
                 console.log(tutorCreated);
                 const tutorId = Database.getInsertId(tutorCreated);
@@ -112,16 +116,23 @@ export class TutorService {
         return Database.transaction(async (connection) => {
             try {
 
-                if (tutorData.name !== undefined) validateName(tutorData.name);
+                if (tutorData.tutor_name !== undefined) validateName(tutorData.tutor_name);
                 if (tutorData.department !== undefined) validateDepartment(tutorData.department);
                 if (tutorData.status !== undefined) isValidStatus(tutorData.status);
                 if (tutorData.phone !== undefined) validatePhone(tutorData.phone);
                 if (tutorData.email !== undefined) validateEmail(tutorData.email);
+                if (tutorData.shift !== undefined) isValidShift(tutorData.shift);
+
+                if (tutorData.tutor_name !== undefined) {
+                    const isNameUnique = await validateDBTutorName(tutorData.tutor_name, id);
+                    if (!isNameUnique) throw new ValidationError('Nombre ya registrado');
+                }
 
                 if (tutorData.email !== undefined) {
                     const isEmailUnique = await validateEmailTutor(tutorData.email, id);
                     if (!isEmailUnique) throw new ValidationError('Email ya registrado');
                 }
+
                 const setClause = Object.keys(tutorData)
                     .map(key => `${key} = ?`)
                     .join(',');

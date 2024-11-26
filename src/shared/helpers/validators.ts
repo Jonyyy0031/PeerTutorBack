@@ -1,6 +1,7 @@
 import { Database } from "../../config/dbConnection";
 import { ValidationError } from "../errors/AppErrors";
 import mysql from 'mysql2/promise';
+import { Schedule } from "../models/logs.types";
 
 export const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -45,9 +46,27 @@ export const validatePassword = (password: string): boolean => {
     return true;
 }
 
+export const validateGroup = (group: string): boolean => {
+    const re = /^[0-9]{2}[A-Z]{2}$/;
+    if (!re.test(group)) throw new ValidationError('Grupo inválido');
+    return true;
+}
+
 export const isValidStatus = (status: string): boolean => {
     if (!['active', 'inactive'].includes(status)) throw new ValidationError('Estado inválido');
     return true;
+}
+
+export const isValidShift = (shift: string): boolean => {
+    if (!['matutino', 'vespertino'].includes(shift)) throw new ValidationError('Turno inválido');
+    return true;
+}
+
+export const validateSchedule = (schedule: Schedule): boolean => {
+    const validDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+    const validHours = ['07:00:00', '08:00:00', '09:00:00', '10:00:00',
+                       '11:00:00', '12:00:00', '13:00:00'];
+    return validDays.includes(schedule.day) && validHours.includes(schedule.hour);
 }
 
 const DBFieldValidator = async (table: string, field: string, value: any, excludeId?: number): Promise<boolean> => {
@@ -57,17 +76,21 @@ const DBFieldValidator = async (table: string, field: string, value: any, exclud
         query += ` AND id != ?`;
         params.push(excludeId);
     }
-    const result = await Database.query<[{count: number}]>(query, params);
+    const result = await Database.query<[{ count: number }]>(query, params);
 
     return result[0].count === 0;
 }
 
-export const validateDBSubjectName = async (name: string, excludeId?: number): Promise<boolean> => {
-    return DBFieldValidator('subject', 'name', name, excludeId);
+export const validateDBSubjectName = async (subject_name: string, excludeId?: number): Promise<boolean> => {
+    return DBFieldValidator('subject', 'subject_name', subject_name, excludeId);
 }
 
-export const validateDBUserName = async (name: string, excludeId?: number): Promise<boolean> => {
-    return DBFieldValidator('user', 'name', name, excludeId);
+export const validateDBTutorName = async (tutor_name: string, excludeId?: number): Promise<boolean> => {
+    return DBFieldValidator('tutor', 'tutor_name', tutor_name, excludeId);
+}
+
+export const validateDBUserName = async (user_name: string, excludeId?: number): Promise<boolean> => {
+    return DBFieldValidator('user', 'user_name', user_name, excludeId);
 }
 
 export const validateEmailTutor = async (email: string, excludeId?: number): Promise<boolean> => {
@@ -77,6 +100,13 @@ export const validateEmailTutor = async (email: string, excludeId?: number): Pro
 export const validateDBUserEmail = async (email: string, excludeId?: number): Promise<boolean> => {
     return DBFieldValidator('user', 'email', email, excludeId);
 }
+
+export const tutorExist = async (connection: mysql.PoolConnection, tutorId: number): Promise<boolean> => {
+    const query = `SELECT COUNT(*) as count FROM tutor WHERE id = ?`;
+    const [result] = await connection.execute(query, [tutorId]);
+    return Database.getCount(result) === 1;
+}
+
 
 export const subjectsExist = async (connection: mysql.PoolConnection, subjectIds: number[]): Promise<boolean> => {
     const query = `SELECT COUNT(*) as count FROM subject WHERE id IN (${subjectIds.join(',')})`;
