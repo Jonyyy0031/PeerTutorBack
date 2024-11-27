@@ -8,6 +8,51 @@ export class UserController {
     constructor(private userService: UserService = new UserService()) {
     }
 
+    login = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const { email, password } = req.body;
+            const user = await this.userService.login(email, password);
+
+            if (!user) {
+                res.status(401).json({
+                    status: 'error',
+                    code: 'UNAUTHORIZED',
+                    message: 'Email o contraseña incorrecta'
+                });
+                return;
+            }
+
+            res.status(200).json({
+                status: 'success',
+                code: 'OK',
+                message: 'Usuario logueado',
+                data: user
+            })
+        } catch (error: any) {
+            if (error instanceof ValidationError) {
+                res.status(400).json({
+                    status: 'error',
+                    code: 'VALIDATION_ERROR',
+                    message: error.message
+                });
+                return;
+            }
+            if (error instanceof DatabaseError) {
+                res.status(500).json({
+                    status: 'error',
+                    code: 'DATABASE_ERROR',
+                    message: error.message
+                });
+                return;
+            }
+            res.status(500).json({
+                status: 'error',
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Error interno del servidor'
+            });
+        }
+    }
+
     getUsers = async (req: Request, res: Response): Promise<void> => {
         try {
             const users = await this.userService.getAllUsersWithRol();

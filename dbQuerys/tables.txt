@@ -1,83 +1,106 @@
 --Tabla 'Rol'
-CREATE TABLE Rol (
+CREATE TABLE role (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name NVARCHAR(100) NOT NULL
+    roleName NVARCHAR(100) NOT NULL
 )
 
 --Tabla 'User'
-CREATE TABLE User (
+CREATE TABLE user (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name NVARCHAR(100) NOT NULL,
+    user_name NVARCHAR(100) NOT NULL,
     email NVARCHAR(100) NOT NULL UNIQUE,
     password NVARCHAR(100) NOT NULL,
-    rol_id INT NOT NULL,
-    FOREIGN KEY (rol_id) REFERENCES Rol(id) ON DELETE CASCADE ON UPDATE CASCADE
+    role_id INT NOT NULL,
+    FOREIGN KEY (role_id) REFERENCES role(id) ON DELETE CASCADE ON UPDATE CASCADE
 )
 
 -- Tabla 'Tutor'
 CREATE TABLE tutor (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name NVARCHAR(100) NOT NULL,
+    tutor_name NVARCHAR(100) NOT NULL,
     email NVARCHAR(150) NOT NULL UNIQUE,
     phone NVARCHAR(15) NOT NULL,
     department NVARCHAR(100) NOT NULL,
-    status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT NULL
+    shift NVARCHAR(10) check (shift in ('matutino', 'vespertino')) not NULL,
+    status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT null
 );
 
 -- Tabla 'Subject'
 CREATE TABLE subject (
     id INT PRIMARY key AUTO_INCREMENT,
-    name NVARCHAR(100) NOT NULL,
+    subject_name NVARCHAR(100) NOT NULL,
     department NVARCHAR(100) NOT NULL,
     status NVARCHAR(10) CHECK (status IN ('active', 'inactive')) NOT NULL
 );
 
+-- Tabla 'Tutor con materias'
 CREATE TABLE tutor_subjects (
     tutor_id INT NOT NULL,
     subject_id INT NOT NULL,
     PRIMARY KEY (tutor_id, subject_id),
-    FOREIGN KEY (tutor_id) REFERENCES tutors(id_tutor) ON DELETE CASCADE, ON UPDATE CASCADE,
-    FOREIGN KEY (subject_id) REFERENCES subjects(id_subject) ON DELETE CASCADE, ON UPDATE CASCADE
+    FOREIGN KEY (tutor_id) REFERENCES tutor(id) ON DELETE cascade ON UPDATE CASCADE,
+    FOREIGN KEY (subject_id) REFERENCES subject(id) ON DELETE cascade ON UPDATE CASCADE
 );
 
 -- Tabla 'Log'
-CREATE TABLE Log (
+CREATE TABLE log (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    namestudent NVARCHAR(100) NOT NULL,
-    grupo NVARCHAR(50) NOT NULL,
-    status NVARCHAR(10) CHECK (status IN ('accepted', 'pending', 'rejected')) NOT NULL,
-    created_at DATETIME not null
-)
+    student_name NVARCHAR(100) NOT NULL,
+    student_group NVARCHAR(50) NOT NULL,
+    tutor_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    status ENUM('pending', 'accepted', 'cancelled') NOT NULL DEFAULT 'pending',
+    FOREIGN KEY (tutor_id) REFERENCES tutor(id),
+    FOREIGN KEY (subject_id) REFERENCES subject(id)
+);
+
+-- Tabla horarios
+
+CREATE TABLE schedule (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    log_id INT NOT NULL,
+    day_of_week ENUM('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes') NOT NULL,
+    hour TIME NOT NULL,
+    FOREIGN KEY (log_id) REFERENCES log(id) on delete cascade
+);
 
 -- Dummy Data
-insert into Rol (name) values
-('superAdmin'), (Admin)
 
-INSERT INTO User (name, email, password, rol_id) VALUES
-('Juan Pérez', 'juan.perez@empresa.com', 'Password123!', 1),
+insert into role (roleName) values
+('superAdmin'), ('Admin')
+
+INSERT INTO user (user_name, email, password, role_id) VALUES
+('Juan Pérez', 'juan.perez@empresa.com', 'Password123!', 2),
 ('María Gómez', 'maria.gomez@empresa.com', 'AdminPass456@', 1),
 ('Carlos Martínez', 'carlos.martinez@empresa.com', 'SecurePassword789#', 1),
-('Ana Rodríguez', 'ana.rodriguez@empresa.com', 'Admin2023!#', 1),
+('Ana Rodríguez', 'ana.rodriguez@empresa.com', 'Admin2023!#', 2),
 ('Luis Fernández', 'luis.fernandez@empresa.com', 'AdminPass2024@', 1);
 
-INSERT INTO tutor (name, email, phone, department, status) VALUES
-('Carlos Pérez', 'carlos.perez@universidad.com', '555-0101', 'Matemáticas', 'active'),
-('Ana Gómez', 'ana.gomez@universidad.com', '555-0102', 'Física', 'active'),
-('José Martínez', 'jose.martinez@universidad.com', '555-0103', 'Química', 'inactive'),
-('María Rodríguez', 'maria.rodriguez@universidad.com', '555-0104', 'Biología', 'active'),
-('Luis Fernández', 'luis.fernandez@universidad.com', '555-0105', 'Matemáticas', 'inactive')
 
-INSERT INTO subject (name, department, status) VALUES
-('Cálculo I', 'Matemáticas', 'active'),
-('Física General', 'Física', 'active'),
-('Química Orgánica', 'Química', 'inactive'),
-('Biología Celular', 'Biología', 'active'),
-('Álgebra Lineal', 'Matemáticas', 'inactive');
+INSERT INTO Tutor (tutor_name , email, phone, department, status, shift) VALUES
+('John Doe', 'john.doe@example.com', '555-1234', 'Mathematics', 'active', 'matutino'),
+('Jane Smith', 'jane.smith@example.com', '555-5678', 'Physics', 'inactive', 'vespertino'),
+('Emily Davis', 'emily.davis@example.com', '555-8765', 'Chemistry', 'active', 'vespertino');
 
-INSERT INTO tutor_subjects (tutor_id, subject_id) VALUES
-(1, 1),  -- Carlos Pérez es tutor de Cálculo I
-(1, 5),  -- Carlos Pérez es tutor de Álgebra Lineal
-(2, 2),  -- Ana Gómez es tutor de Física General
-(3, 3),  -- José Martínez es tutor de Química Orgánica
-(4, 4),  -- María Rodríguez es tutor de Biología Celular
-(5, 1);  -- Luis Fernández es tutor de Cálculo I
+
+INSERT INTO Subject (subject_name , department, status) VALUES
+('Calculus I', 'Mathematics', 'active'),
+('Physics I', 'Physics','inactive'),
+('Chemistry I', 'Chemistry','inactive');
+
+
+INSERT INTO Tutor_Subjects (tutor_id , subject_id) VALUES
+(1, 1),
+(2, 1),
+(3, 2),
+(1, 3)
+
+INSERT INTO Log (student_name , student_group , tutor_id , subject_id , status) VALUES
+('Alice Johnson', 'Group A', 1, 1, 'accepted'),
+('Bob Brown', 'Group B', 2, 2, 'pending'),
+('Charlie Green', 'Group C', 3, 3, 'cancelled');
+
+insert into schedule (log_id, day_of_week, `hour`) VALUES
+(1, 'Lunes', '07:00:00'),
+(2, 'Martes', '11:00:00'),
+(3, 'Lunes', '12:00:00');

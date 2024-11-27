@@ -2,6 +2,7 @@ import { User, CreateUserDTO } from '../../shared/models/user.types';
 import { Database } from '../../config/dbConnection';
 import { validateDBUserEmail, validateDBUserName, validateEmail, validateNameUser, validatePassword } from '../../shared/helpers/validators';
 import { DatabaseError, ValidationError } from '../../shared/errors/AppErrors';
+import { generateToken } from '../../shared/helpers/handleJWT';
 
 export class UserService {
     async getAllUsersWithRol(): Promise<User[]> {
@@ -101,5 +102,29 @@ export class UserService {
         console.log("Deleting user");
         const result = await Database.query<any>(`DELETE FROM user WHERE id = ?`, [id]);
         return result.affectedRows > 0;
+    }
+
+    async login(email: string, password: string): Promise<{user: Partial<User>, token: string}> {
+        console.log("Logging in");
+        try {
+            const query = `
+            SELECT u.id, u.user_name, u.email, r.roleName
+            FROM user as u
+            INNER JOIN role as r ON u.role_id = r.id
+            WHERE u.email = ? AND u.password = ?`;
+            const [user] = await Database.query<User[]>(query, [email, password]);
+            if (!user) throw new ValidationError('Usuario o contraseña incorrectos');
+
+            const token = await generateToken(user);
+            const { password: _, ...userWithoutPassword } = user;
+
+            return { user: userWithoutPassword, token };
+
+        } catch (error: any) {
+            if (error instanceof ValidationError) {
+                throw error;
+            }
+            throw new DatabaseError('Error inesperado al iniciar sesión');
+        }
     }
 }

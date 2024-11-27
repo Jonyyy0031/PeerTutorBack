@@ -3,7 +3,7 @@ export interface User extends BaseEntity{
     user_name: string;
     email: string;
     password: string;
-    role: string;
+    roleName: string;
 }
 
 export interface CreateUserDTO {
