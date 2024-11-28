@@ -1,4 +1,13 @@
+AVAILABLE ROUTES
+api/users
+api/login
+api/tutors
+api/subjects
+api/logs
+
+
 ALL ROUTES IN ROUTES FOLDER
+
 
 -- Users
     POST AND PUT (on put u can send partial props)
@@ -35,3 +44,14 @@ ALL ROUTES IN ROUTES FOLDER
     "status": "active"
 }
 
+--log
+{
+    "student_name": "Pepo Hernandez Molina",
+    "student_group": "23BM",
+    "tutor_id": 3,
+    "subject_id": 3,
+    "schedules": {
+        "day": "Viernes",
+        "hour": "7:00:00"
+    }
+}
