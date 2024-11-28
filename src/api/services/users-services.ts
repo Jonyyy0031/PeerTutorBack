@@ -59,7 +59,7 @@ export class UserService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
-                throw new DatabaseError('Error inesperado al crear usuario');
+                throw new DatabaseError('Error inesperado al crear usuario ' + error);
             }
         });
     }
@@ -79,7 +79,6 @@ export class UserService {
                     const isEmailUnique = await validateDBUserName(userData.email, id);
                     if (!isEmailUnique) throw new ValidationError('El email ya existe');
                 }
-                console.log(userData);
                 const setClause = Object.keys(userData)
                     .map(key => `${key} = ?`)
                     .join(', ');
@@ -93,7 +92,7 @@ export class UserService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
-                throw new DatabaseError('Error inesperado al actualizar usuario');
+                throw new DatabaseError('Error inesperado al actualizar usuario ' + error);
             }
         });
     }
@@ -124,7 +123,7 @@ export class UserService {
             if (error instanceof ValidationError) {
                 throw error;
             }
-            throw new DatabaseError('Error inesperado al iniciar sesión');
+            throw new DatabaseError('Error inesperado al iniciar sesión ' + error);
         }
     }
 }

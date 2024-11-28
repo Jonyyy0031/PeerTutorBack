@@ -1,7 +1,7 @@
 import { Database } from "../../config/dbConnection";
 import { ValidationError } from "../errors/AppErrors";
 import mysql from 'mysql2/promise';
-import { Schedule } from "../models/logs.types";
+import { CreateLogDTO, Schedule } from "../models/logs.types";
 
 export const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -65,7 +65,7 @@ export const isValidShift = (shift: string): boolean => {
 export const validateSchedule = (schedule: Schedule): boolean => {
     const validDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
     const validHours = ['07:00:00', '08:00:00', '09:00:00', '10:00:00',
-                       '11:00:00', '12:00:00', '13:00:00'];
+        '11:00:00', '12:00:00', '13:00:00'];
     return validDays.includes(schedule.day) && validHours.includes(schedule.hour);
 }
 
@@ -107,10 +107,23 @@ export const tutorExist = async (connection: mysql.PoolConnection, tutorId: numb
     return Database.getCount(result) === 1;
 }
 
-
 export const subjectsExist = async (connection: mysql.PoolConnection, subjectIds: number[]): Promise<boolean> => {
     const query = `SELECT COUNT(*) as count FROM subject WHERE id IN (${subjectIds.join(',')})`;
     const [result] = await connection.execute(query, subjectIds);
 
     return Database.getCount(result) === subjectIds.length
+}
+
+export const scheduleExist = async (connection: mysql.PoolConnection, logData: Partial<CreateLogDTO>): Promise<boolean> => {
+    const query = `
+    SELECT count(*) as count
+    FROM schedule s
+    INNER JOIN log l ON s.log_id = l.id
+    WHERE l.tutor_id = ?
+    AND l.subject_id = ?
+    AND s.day_of_week = ?
+    AND s.hour = ?;`
+    const [result] = await connection.execute(query, [logData.tutor_id, logData.subject_id, logData.schedules?.day, logData.schedules?.hour]);
+    if (Database.getCount(result) > 0) throw new ValidationError('El horario ya está ocupado');
+    return true;
 }

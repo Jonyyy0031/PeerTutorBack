@@ -46,7 +46,7 @@ export class SubjectService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
-                throw new DatabaseError('Error inesperado al crear materia');
+                throw new DatabaseError('Error inesperado al crear materia' + error);
             }
         });
     }
@@ -80,7 +80,7 @@ export class SubjectService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
-                throw new DatabaseError('Error inesperado al actualizar materia');
+                throw new DatabaseError('Error inesperado al actualizar materia' + error);
             }
         });
     }

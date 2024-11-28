@@ -63,11 +63,11 @@ export class TutorService {
                     if (!SubjectsExist) throw new ValidationError('Existen materias no registradas');
                 }
 
+
                 const query = 'INSERT INTO tutor (tutor_name, email, phone, department, status, shift) VALUES(?, ?, ?, ?, ?, ?)'
                 const [tutorCreated] = await connection.execute(query,
                     [tutorData.tutor_name, tutorData.email, tutorData.phone, tutorData.department, tutorData.status, tutorData.shift]
                 );
-                console.log(tutorCreated);
                 const tutorId = Database.getInsertId(tutorCreated);
 
                 await this.assignSubjectsToTutor(tutorId, subjectIds, 'add');
@@ -80,7 +80,7 @@ export class TutorService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
-                throw new DatabaseError('Error inesperado al crear tutor');
+                throw new DatabaseError('Error inesperado al crear tutor' + error);
             }
         });
     }
@@ -90,7 +90,6 @@ export class TutorService {
 
         switch (mode) {
             case 'replace':
-                console.log('REPLACE')
                 await this.removeSubjectsFromTutor(tutorId, subjectIds);
                 break;
 
@@ -155,7 +154,7 @@ export class TutorService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
-                throw new DatabaseError('Error inesperado al actualizar tutor');
+                throw new DatabaseError('Error inesperado al actualizar tutor' + error);
             }
         })
     }

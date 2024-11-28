@@ -1,12 +1,12 @@
 import { Database } from "../../config/dbConnection";
 import { Log, CreateLogDTO } from "../../shared/models/logs.types";
 import { DatabaseError, ValidationError } from "../../shared/errors/AppErrors";
-import { subjectsExist, tutorExist, validateGroup, validateName, validateSchedule } from "../../shared/helpers/validators";
+import { scheduleExist, subjectsExist, tutorExist, validateGroup, validateName, validateSchedule } from "../../shared/helpers/validators";
+import { query } from "express";
 
 export class LogsService {
 
     async getAllLogs(): Promise<Log[]> {
-        console.log("Getting log");
         const query = `SELECT * FROM log`;
         const logs = await Database.query<Log[]>(query);
         return logs;
@@ -49,12 +49,12 @@ export class LogsService {
     async createLog(logData: CreateLogDTO): Promise<Log> {
         return Database.transaction(async (connection) => {
             try {
-                console.log(logData)
                 validateName(logData.student_name);
                 validateGroup(logData.student_group);
                 await tutorExist(connection, logData.tutor_id);
                 await subjectsExist(connection, [logData.subject_id]);
                 validateSchedule(logData.schedules);
+                await scheduleExist(connection, logData);
 
                 const query = `INSERT INTO log (student_name, student_group, tutor_id, subject_id) VALUES (?, ?, ?, ?)`;
                 const [logCreated] = await connection.execute(query,
@@ -62,9 +62,6 @@ export class LogsService {
                 let logId = Database.getInsertId(logCreated);
 
                 await this.insertSchedule(logId, logData.schedules);
-
-                console.log('pase')
-
 
                 return this.getLogById(logId);
 
@@ -83,19 +80,27 @@ export class LogsService {
     async updateLog(id: number, logData: Partial<CreateLogDTO>): Promise<Log> {
         return Database.transaction(async (connection) => {
             try {
-                if (Object.keys(logData).length === 0) throw new ValidationError('Datos vacios');
+
+                const {schedules, ...updateData} = logData;
+
                 if (logData.student_name !== undefined) validateName(logData.student_name);
                 if (logData.student_group !== undefined) validateGroup(logData.student_group);
                 if (logData.tutor_id !== undefined) tutorExist(connection, logData.tutor_id);
                 if (logData.subject_id !== undefined) subjectsExist(connection, [logData.subject_id]);
 
-                const setClause = Object.keys(logData)
-                    .map(key => `${key} = ?`)
-                    .join(', ');
+                const setClause = Object.keys(updateData)
+                .map(key => `${key} = ?`)
+                .join(', ');
                 await connection.execute(
                     `UPDATE log SET ${setClause} WHERE id = ?`,
-                    [...Object.values(logData), id]
+                    [...Object.values(updateData), id]
                 );
+
+                if (schedules) {
+                    validateSchedule(schedules);
+                    await scheduleExist(connection, logData);
+                    await this.updateSchedule(id, schedules);
+                }
 
                 return this.getLogById(id);
             } catch (error) {
@@ -105,7 +110,7 @@ export class LogsService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
-                throw new DatabaseError('Error inesperado al actualizar el registro');
+            throw new DatabaseError('Error inesperado al actualizar el registro' + error);
             }
         });
     }
@@ -118,9 +123,15 @@ export class LogsService {
 
     async insertSchedule(logId: number, schedule: any): Promise<boolean> {
         console.log("Inserting schedule");
-        console.log(schedule)
         const query = `INSERT INTO schedule (log_id, day_of_week, hour) VALUES (?, ?, ?)`;
         const result = await Database.query<any>(query, [logId, schedule.day, schedule.hour]);
+        return result.affectedRows > 0;
+    }
+
+    async updateSchedule(logId: number, schedule: any): Promise<boolean> {
+        console.log("Updating schedule");
+        const query = `UPDATE schedule SET day_of_week = ?, hour = ? WHERE log_id = ?`;
+        const result = await Database.query<any>(query, [schedule.day, schedule.hour, logId]);
         return result.affectedRows > 0;
     }
 }

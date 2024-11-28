@@ -73,7 +73,6 @@ export class TutorController {
     createTutor = async (req: Request, res: Response): Promise<void> => {
         try {
             const { tutorData, subjectIds } = req.body;
-            console.log(req.body)
             if (!subjectIds || subjectIds.length === 0) {
                 res.status(400).json({
                     message: 'At least one subject is required'
@@ -199,7 +198,7 @@ export class TutorController {
                 code: 'INTERNAL_SERVER_ERROR',
                 message: 'Error interno del servidor'
             });
-            console.log(error);
+
         }
 
     }

@@ -5,7 +5,6 @@ import { User } from '../models/user.types';
 const secret = process.env.JWT_SECRET || 'asd';
 
 export const generateToken = async (user: User): Promise<string> => {
-  console.log(secret)
   const token = await jwt.sign(
     {
       id: user.id,
@@ -22,7 +21,6 @@ export const generateToken = async (user: User): Promise<string> => {
 export const validateJWT = (token: string) => {
   try {
     const decoded = jwt.verify(token, secret) as Payload;
-    console.log(decoded);
     return decoded;
   } catch (error) {
     return null;

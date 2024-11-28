@@ -39,9 +39,9 @@ export class Database {
     ): Promise<T> {
         const connection = await (await Database.GetConnection()).getConnection();
         Database.transactionConnection = connection;
-        await connection.beginTransaction();
 
         try {
+            await connection.beginTransaction();
             const result = await callback(connection);
             await connection.commit();
             return result;
