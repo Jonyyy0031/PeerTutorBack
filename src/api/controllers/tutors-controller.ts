@@ -203,3 +203,5 @@ export class TutorController {
 
     }
 }
+
+export default TutorController;

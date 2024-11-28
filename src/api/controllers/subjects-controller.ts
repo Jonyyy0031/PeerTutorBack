@@ -208,3 +208,5 @@ export class SubjectsController {
     }
 
 }
+
+export default SubjectsController;

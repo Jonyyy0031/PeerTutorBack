@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 import UserController from './api/controllers/users-controller';
+import TutorController from './api/controllers/tutors-controller';
+import LogsController from './api/controllers/logs-controller';
 
 import tutorRouter from './api/routes/tutors-routes';
 import subjectRouter from './api/routes/subjects-routes';
@@ -18,42 +20,45 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 
 const userController = new UserController();
-
-const apiRouter = Router();
+const tutorController = new TutorController();
+const logController = new LogsController();
 
 const app: Application = express();
+
+const publicRouter = Router();
+const protectedRouter = Router();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cors())
 app.use(express.json());
 
-app.use('/api', apiRouter);
+app.use('/api/public', publicRouter);
+app.use('/api/admin', protectedRouter);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date() });
 });
+publicRouter.post("/login", userController.login);
+publicRouter.get("/tutors", tutorController.getTutors);
+publicRouter.post("/logs", logController.createLog);
 
+protectedRouter.use(validateBodyMiddleware);
+protectedRouter.use(authMiddleware);
 
-apiRouter.post("/login", userController.login);
+protectedRouter.use(userRouter);
+protectedRouter.use(subjectRouter);
+protectedRouter.use(tutorRouter);
+protectedRouter.use(logsRouter);
 
-apiRouter.use(validateBodyMiddleware)
-apiRouter.use(authMiddleware);
-apiRouter.use(userRouter);
-apiRouter.use(subjectRouter);
-apiRouter.use(tutorRouter);
-apiRouter.use(logsRouter);
-
-app.use(errorHandler as any)
+app.use(errorHandler as any);
 
 app.use('*', (req, res) => {
   res.status(404).json({
-
     status: 'error',
     message: 'NOT_FOUND',
     error: `Ruta ${req.originalUrl} no encontrada`
   });
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
