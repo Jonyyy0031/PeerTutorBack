@@ -5,7 +5,7 @@ import { User } from '../models/user.types';
 const secret = process.env.JWT_SECRET || 'asd';
 
 export const generateToken = async (user: User): Promise<string> => {
-  const token = await jwt.sign(
+  return await jwt.sign(
     {
       id: user.id,
       user_name: user.user_name,
@@ -15,7 +15,7 @@ export const generateToken = async (user: User): Promise<string> => {
     secret,
     { expiresIn: '1h' }
   );
-  return token;
+
 };
 
 export const validateJWT = (token: string) => {

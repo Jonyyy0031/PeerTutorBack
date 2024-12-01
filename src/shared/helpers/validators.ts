@@ -66,7 +66,7 @@ export const validateSchedule = (schedule: Schedule): boolean => {
     const validDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
     const validHours = ['07:00:00', '08:00:00', '09:00:00', '10:00:00',
         '11:00:00', '12:00:00', '13:00:00'];
-    return validDays.includes(schedule.day) && validHours.includes(schedule.hour);
+    return validDays.includes(schedule.day_of_week) && validHours.includes(schedule.hour);
 }
 
 const DBFieldValidator = async (table: string, field: string, value: any, excludeId?: number): Promise<boolean> => {
@@ -123,7 +123,7 @@ export const scheduleExist = async (connection: mysql.PoolConnection, logData: P
     AND l.subject_id = ?
     AND s.day_of_week = ?
     AND s.hour = ?;`
-    const [result] = await connection.execute(query, [logData.tutor_id, logData.subject_id, logData.schedules?.day, logData.schedules?.hour]);
+    const [result] = await connection.execute(query, [logData.tutor_id, logData.subject_id, logData.schedules?.day_of_week, logData.schedules?.hour]);
     if (Database.getCount(result) > 0) throw new ValidationError('El horario ya está ocupado');
     return true;
 }

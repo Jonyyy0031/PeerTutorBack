@@ -82,7 +82,7 @@ export class LogsService {
             try {
 
                 const {schedules, ...updateData} = logData;
-
+                console.log(updateData);
                 if (logData.student_name !== undefined) validateName(logData.student_name);
                 if (logData.student_group !== undefined) validateGroup(logData.student_group);
                 if (logData.tutor_id !== undefined) tutorExist(connection, logData.tutor_id);
@@ -102,7 +102,7 @@ export class LogsService {
                     await this.updateSchedule(id, schedules);
                 }
 
-                return this.getLogById(id);
+                return this.getLogWithInfo(id);
             } catch (error) {
                 if (error instanceof ValidationError) {
                     throw error;
@@ -124,14 +124,14 @@ export class LogsService {
     async insertSchedule(logId: number, schedule: any): Promise<boolean> {
         console.log("Inserting schedule");
         const query = `INSERT INTO schedule (log_id, day_of_week, hour) VALUES (?, ?, ?)`;
-        const result = await Database.query<any>(query, [logId, schedule.day, schedule.hour]);
+        const result = await Database.query<any>(query, [logId, schedule.day_of_week, schedule.hour]);
         return result.affectedRows > 0;
     }
 
     async updateSchedule(logId: number, schedule: any): Promise<boolean> {
         console.log("Updating schedule");
         const query = `UPDATE schedule SET day_of_week = ?, hour = ? WHERE log_id = ?`;
-        const result = await Database.query<any>(query, [schedule.day, schedule.hour, logId]);
+        const result = await Database.query<any>(query, [schedule.day_of_week, schedule.hour, logId]);
         return result.affectedRows > 0;
     }
 }

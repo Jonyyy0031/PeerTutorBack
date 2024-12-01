@@ -4,7 +4,7 @@ type Status = 'accepted' | 'pending' | 'rejected';
 type DayOfWeek = 'Lunes' | 'Martes' | 'Miercoles' | 'Jueves' | 'Viernes';
 
 export interface Schedule {
-    day: DayOfWeek;
+    day_of_week: DayOfWeek;
     hour: string;
 }
 
