@@ -12,53 +12,53 @@ export const validateEmail = (email: string) => {
 export const validatePhone = (phone: string): boolean => {
     // /^\d{3}-\d{3}-\d{4}$|^\d{3}\s\d{3}\s\d{4}$/
     const re = /^\d{3}-\d{3}-\d{4}$/;
-    if (!re.test(phone.replace(/\s/g, ''))) throw new ValidationError('Teléfono inválido');
+    if (!re.test(phone.replace(/\s/g, ''))) throw new ValidationError('Teléfono inválido: Debe tener el formato xxx-xxx-xxxx');
     return true;
 }
 
 export const validateName = (name: string): boolean => {
     const re = /^[a-zA-Z\s]+$/;
-    if (!re.test(name)) throw new ValidationError('Nombre inválido');
+    if (!re.test(name)) throw new ValidationError('Nombre inválido: Solo se aceptan letras');
     return true;
 }
 
 export const validateNameSubject = (name: string): boolean => {
     const re = /^[a-zA-Z0-9\s]+$/;
-    if (!re.test(name)) throw new ValidationError('Nombre de materia inválido');
+    if (!re.test(name)) throw new ValidationError('Nombre de materia inválido: Solo se aceptan letras y números');
     return true;
 }
 
 export const validateNameUser = (name: string): boolean => {
     const re = /^[a-zA-Z0-9\s]+$/;
-    if (!re.test(name)) throw new ValidationError('Nombre de usuario inválido');
+    if (!re.test(name)) throw new ValidationError('Nombre de usuario inválido: Solo se aceptan letras y números');
     return true;
 }
 
 export const validateDepartment = (department: string): boolean => {
     const re = /^[a-zA-Z0-9\s]+$/;
-    if (!re.test(department)) throw new ValidationError('Departamento inválido');
+    if (!re.test(department)) throw new ValidationError('Departamento inválido: Solo se aceptan letras y números');
     return true;
 }
 
 export const validatePassword = (password: string): boolean => {
-    const re = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-    if (!re.test(password)) throw new ValidationError('Contraseña inválida');
+    const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
+    if (!re.test(password)) throw new ValidationError('Contraseña inválida: Debe contener al menos 8 caracteres, un numero, una mayúscula y un simbolo ');
     return true;
 }
 
 export const validateGroup = (group: string): boolean => {
     const re = /^[0-9]{2}[A-Z]{2}$/;
-    if (!re.test(group)) throw new ValidationError('Grupo inválido');
+    if (!re.test(group)) throw new ValidationError('Grupo inválido: Debe contener 2 números y 2 letras mayúsculas');
     return true;
 }
 
 export const isValidStatus = (status: string): boolean => {
-    if (!['active', 'inactive'].includes(status)) throw new ValidationError('Estado inválido');
+    if (!['active', 'inactive'].includes(status)) throw new ValidationError('Estado inválido: Solo se acepta Activo o Inactivo');
     return true;
 }
 
 export const isValidShift = (shift: string): boolean => {
-    if (!['matutino', 'vespertino'].includes(shift)) throw new ValidationError('Turno inválido');
+    if (!['matutino', 'vespertino'].includes(shift)) throw new ValidationError('Turno inválido: Solo se acepta Matutino o Vespertino');
     return true;
 }
 

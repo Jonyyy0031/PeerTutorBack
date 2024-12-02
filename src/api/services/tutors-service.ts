@@ -131,7 +131,6 @@ export class TutorService {
                     const isEmailUnique = await validateEmailTutor(tutorData.email, id);
                     if (!isEmailUnique) throw new ValidationError('Email ya registrado');
                 }
-
                 const setClause = Object.keys(tutorData)
                     .map(key => `${key} = ?`)
                     .join(',');

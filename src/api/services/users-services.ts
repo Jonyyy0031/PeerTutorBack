@@ -3,12 +3,13 @@ import { Database } from '../../config/dbConnection';
 import { validateDBUserEmail, validateDBUserName, validateEmail, validateNameUser, validatePassword } from '../../shared/helpers/validators';
 import { DatabaseError, ValidationError } from '../../shared/errors/AppErrors';
 import { generateToken } from '../../shared/helpers/handleJWT';
+import { comparePassword, hashPassword } from '../../shared/helpers/handlebcrypt';
 
 export class UserService {
     async getAllUsersWithRol(): Promise<User[]> {
         console.log("Getting users");
         const query =
-            `SELECT u.id, u.user_name, u.email, r.roleName
+            `SELECT u.id, u.user_name, u.email, u.role_id, r.roleName
         FROM user as u
         INNER JOIN role as r ON u.role_id = r.id`;
         const users = await Database.query<User[]>(query);
@@ -33,6 +34,12 @@ export class UserService {
         return user[0];
     }
 
+    async getUserPassword (email: string): Promise<string> {
+        const query = `SELECT password FROM user WHERE email = ?`;
+        const [user] = await Database.query<{password: string}[]>(query, [email]);
+        return user.password;
+    }
+
     async createUser(userData: CreateUserDTO): Promise<User> {
         return Database.transaction(async (connection) => {
             try {
@@ -44,6 +51,8 @@ export class UserService {
 
                 const isEmailUnique = await validateDBUserEmail(userData.email);
                 if (!isEmailUnique) throw new ValidationError('El email ya existe');
+
+                userData.password = await hashPassword(userData.password);
 
                 const query = `INSERT INTO user (user_name, email, password, role_id) VALUES (?, ?, ? ,?)`;
                 const [userCreated] = await connection.execute(query,
@@ -70,7 +79,10 @@ export class UserService {
             try {
                 if (userData.user_name !== undefined) validateNameUser(userData.user_name);
                 if (userData.email !== undefined) validateEmail(userData.email);
-                if (userData.password !== undefined) validatePassword(userData.password);
+                if (userData.password !== undefined) {
+                    validatePassword(userData.password);
+                    userData.password = await hashPassword(userData.password);
+                };
                 if (userData.user_name !== undefined) {
                     const isNameUnique = await validateDBUserName(userData.user_name, id);
                     if (!isNameUnique) throw new ValidationError('El nombre de usuario ya existe');
@@ -107,17 +119,19 @@ export class UserService {
         console.log("Logging in");
         try {
             const query = `
-            SELECT u.id, u.user_name, u.email, r.roleName
+            SELECT u.id, u.user_name, u.email, u.password, r.roleName
             FROM user as u
             INNER JOIN role as r ON u.role_id = r.id
-            WHERE u.email = ? AND u.password = ?`;
-            const [user] = await Database.query<User[]>(query, [email, password]);
-            if (!user) throw new ValidationError('Usuario o contraseña incorrectos');
+            WHERE u.email = ?`;
+            const [user] = await Database.query<User[]>(query, [email]);
+            if (!user) throw new ValidationError('El email no tiene una cuenta asociada');
+
+            const isPasswordValid = await comparePassword(password, user.password);
+            if (!isPasswordValid) throw new ValidationError('La contraseña es incorrecta');
 
             const token = await generateToken(user);
-            const { password: _, ...userWithoutPassword } = user;
-
-            return { user: userWithoutPassword, token };
+            const { password: _, ...userData } = user;
+            return { user: userData, token };
 
         } catch (error: any) {
             if (error instanceof ValidationError) {

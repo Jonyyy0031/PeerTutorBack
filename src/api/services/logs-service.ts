@@ -82,7 +82,6 @@ export class LogsService {
             try {
 
                 const {schedules, ...updateData} = logData;
-                console.log(updateData);
                 if (logData.student_name !== undefined) validateName(logData.student_name);
                 if (logData.student_group !== undefined) validateGroup(logData.student_group);
                 if (logData.tutor_id !== undefined) tutorExist(connection, logData.tutor_id);
