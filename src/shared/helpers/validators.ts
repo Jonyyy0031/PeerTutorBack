@@ -107,7 +107,7 @@ export const tutorExist = async (connection: mysql.PoolConnection, tutorId: numb
     return Database.getCount(result) === 1;
 }
 
-export const subjectsExist = async (connection: mysql.PoolConnection, subjectIds: number[]): Promise<boolean> => {
+export const subjectsExist = async (connection: mysql.PoolConnection, subjectIds: number[] ): Promise<boolean> => {
     const query = `SELECT COUNT(*) as count FROM subject WHERE id IN (${subjectIds.join(',')})`;
     const [result] = await connection.execute(query, subjectIds);
 

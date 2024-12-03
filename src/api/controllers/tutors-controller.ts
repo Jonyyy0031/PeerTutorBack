@@ -202,6 +202,41 @@ export class TutorController {
         }
 
     }
+
+    tutorFeedback = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const tutorId = parseInt(req.params.id);
+            const { feedback } = req.body;
+            await this.tutorService.tutorFeedback(tutorId, feedback);
+            res.status(200).json({
+                status: 'success',
+                code: 'OK',
+                message: 'Feedback enviado'
+            });
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                res.status(400).json({
+                    status: 'error',
+                    code: 'VALIDATION_ERROR',
+                    message: error.message
+                });
+                return;
+            }
+            if (error instanceof DatabaseError) {
+                res.status(500).json({
+                    status: 'error',
+                    code: 'DATABASE_ERROR',
+                    message: error.message
+                });
+                return;
+            }
+            res.status(500).json({
+                status: 'error',
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Error interno del servidor'
+            });
+        }
+    }
 }
 
 export default TutorController;

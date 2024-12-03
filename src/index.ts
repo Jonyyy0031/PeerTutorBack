@@ -1,6 +1,6 @@
 import express, { Application, Router } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 
 import UserController from './api/controllers/users-controller';
 import TutorController from './api/controllers/tutors-controller';
@@ -40,6 +40,7 @@ app.get('/health', (req, res) => {
 });
 publicRouter.post("/login", userController.login);
 publicRouter.get("/tutors", tutorController.getTutors);
+publicRouter.post("/tutors/:id", tutorController.tutorFeedback);
 publicRouter.post("/logs", logController.createLog);
 
 protectedRouter.use(validateBodyMiddleware);

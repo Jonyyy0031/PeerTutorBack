@@ -2,9 +2,15 @@ import { Database } from "../../config/dbConnection";
 import { Log, CreateLogDTO } from "../../shared/models/logs.types";
 import { DatabaseError, ValidationError } from "../../shared/errors/AppErrors";
 import { scheduleExist, subjectsExist, tutorExist, validateGroup, validateName, validateSchedule } from "../../shared/helpers/validators";
-import { query } from "express";
+import { TutorService } from './tutors-service';
+import { EmailService } from "./email-service";
 
 export class LogsService {
+
+    constructor(
+        private tutorService: TutorService = new TutorService(),
+        private emailService: EmailService = new EmailService()
+    ) { }
 
     async getAllLogs(): Promise<Log[]> {
         const query = `SELECT * FROM log`;
@@ -55,13 +61,23 @@ export class LogsService {
                 await subjectsExist(connection, [logData.subject_id]);
                 validateSchedule(logData.schedules);
                 await scheduleExist(connection, logData);
-
                 const query = `INSERT INTO log (student_name, student_group, tutor_id, subject_id) VALUES (?, ?, ?, ?)`;
                 const [logCreated] = await connection.execute(query,
                     [logData.student_name, logData.student_group, logData.tutor_id, logData.subject_id]);
                 let logId = Database.getInsertId(logCreated);
 
                 await this.insertSchedule(logId, logData.schedules);
+
+                const tutorEmail = await this.tutorService.getTutorEmail(logData.tutor_id);
+
+                await this.emailService.sendTutorSessionNotification(
+                    tutorEmail,
+                    {
+                        studentName: logData.student_name,
+                        group: logData.student_group,
+                        schedule: logData.schedules
+                    }
+                )
 
                 return this.getLogById(logId);
 
@@ -72,6 +88,7 @@ export class LogsService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
+                console.log(error);
                 throw new DatabaseError('Error inesperado al crear log');
             }
         });
@@ -81,15 +98,15 @@ export class LogsService {
         return Database.transaction(async (connection) => {
             try {
 
-                const {schedules, ...updateData} = logData;
+                const { schedules, ...updateData } = logData;
                 if (logData.student_name !== undefined) validateName(logData.student_name);
                 if (logData.student_group !== undefined) validateGroup(logData.student_group);
                 if (logData.tutor_id !== undefined) tutorExist(connection, logData.tutor_id);
                 if (logData.subject_id !== undefined) subjectsExist(connection, [logData.subject_id]);
 
                 const setClause = Object.keys(updateData)
-                .map(key => `${key} = ?`)
-                .join(', ');
+                    .map(key => `${key} = ?`)
+                    .join(', ');
                 await connection.execute(
                     `UPDATE log SET ${setClause} WHERE id = ?`,
                     [...Object.values(updateData), id]
@@ -109,7 +126,7 @@ export class LogsService {
                 if (error instanceof DatabaseError) {
                     throw error;
                 }
-            throw new DatabaseError('Error inesperado al actualizar el registro' + error);
+                throw new DatabaseError('Error inesperado al actualizar el registro' + error);
             }
         });
     }

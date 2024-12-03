@@ -4,9 +4,13 @@ import CreateTutorDTO from '../../shared/models/tutor.types';
 import Subject from "../../shared/models/subjects.types";
 import { isValidStatus, validateDepartment, validateEmail, validateEmailTutor, validateName, validatePhone, subjectsExist, validateDBTutorName, isValidShift } from '../../shared/helpers/validators';
 import { DatabaseError, ValidationError } from "../../shared/errors/AppErrors";
+import { EmailService } from "./email-service";
 
 
 export class TutorService {
+
+    constructor(private emailService: EmailService = new EmailService()) { }
+
     async getAllTutors(): Promise<Tutor[]> {
         console.log("Getting tutors");
         const query = `SELECT * FROM tutor`;
@@ -28,6 +32,12 @@ export class TutorService {
         }
 
         return tutor;
+    }
+
+    async getTutorEmail (id: number): Promise<string> {
+        const query = `SELECT email FROM tutor WHERE id = ?`;
+        const [tutor] = await Database.query<{email: string}[]>(query, [id]);
+        return tutor.email;
     }
 
     async getTutorSubjects(tutorId: number): Promise<Subject[]> {
@@ -156,6 +166,11 @@ export class TutorService {
                 throw new DatabaseError('Error inesperado al actualizar tutor' + error);
             }
         })
+    }
+
+    async tutorFeedback(tutorId: number, feedback: string): Promise<void> {
+        const tutorEmail = await this.getTutorEmail(tutorId);
+        this.emailService.sendTutorFeedback(tutorEmail, feedback);
     }
 
     async deleteTutor(id: number): Promise<boolean> {
