@@ -55,7 +55,7 @@ export class EmailService {
                                                 </tr>
                                                 <tr>
                                                     <td style="padding: 10px; background-color: #f8f9fa; border-radius: 4px;">
-                                                        <strong style="color: #5B3427;">Horario:</strong>
+                                                        <strong style="color: #5B3427;">Horario (Formato de 24 horas):</strong>
                                                         <div style="color: #333; margin-top: 5px;">${data.schedule.day_of_week}, ${data.schedule.hour}</div>
                                                     </td>
                                                 </tr>

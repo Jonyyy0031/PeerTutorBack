@@ -75,7 +75,9 @@ export class TutorController {
             const { tutorData, subjectIds } = req.body;
             if (!subjectIds || subjectIds.length === 0) {
                 res.status(400).json({
-                    message: 'At least one subject is required'
+                    status: 'error',
+                    code: 'VALIDATION_ERROR',
+                    message: 'Se debe proporcionar al menos una materia'
                 });
                 return;
             }

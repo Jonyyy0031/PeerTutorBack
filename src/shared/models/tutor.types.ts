@@ -22,3 +22,8 @@ export default interface CreateTutorDTO {
     status: Status;
     shift: Shift;
 }
+
+export default interface feedbackDTO {
+    email: string;
+    feedback: string;
+}

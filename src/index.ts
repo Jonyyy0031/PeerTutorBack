@@ -40,7 +40,7 @@ app.get('/health', (req, res) => {
 });
 publicRouter.post("/login", userController.login);
 publicRouter.get("/tutors", tutorController.getTutors);
-publicRouter.post("/tutors/:id", tutorController.tutorFeedback);
+publicRouter.post("/tutors/:id/feedback", tutorController.tutorFeedback);
 publicRouter.post("/logs", logController.createLog);
 
 protectedRouter.use(validateBodyMiddleware);
